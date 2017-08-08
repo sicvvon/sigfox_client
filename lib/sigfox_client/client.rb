@@ -30,14 +30,16 @@ module SigfoxClient
     end
 
     def get_devices(devicetype)
-      # puts devicetype.to_json
-      res = get_json("devicetypes/#{devicetype.id}/devices")
-      devices_json = JSON.parse(res)['data']
-      devices = []
-      devices_json.each do |d|
-        devices.push SigfoxClient::Device.new(d)
+      devices_json = []
+      api_url = "devicetypes/#{devicetype.id}/devices"
+      has_pag = true
+      while has_pag
+        res = JSON.parse(get_json(api_url))
+        devices_json+= res['data']
+        has_pag = res['paging'].present?
+        api_url = res['paging']['next'].split('/api/').last if has_pag
       end
-      devices
+      devices_json.map! { |d| SigfoxClient::Device.new(d)}
     end
 
 
